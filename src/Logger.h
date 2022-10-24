@@ -60,6 +60,51 @@ namespace SPIN
                     virtual void Handle(SPIN::Log::LogLevel, const char* message) = 0;
                     virtual void Flush() = 0;
             };
+
+            class SerialSinkConfigurations
+            {
+                private:
+#ifdef ARDUINO
+                    Stream* _stream = (Stream*)NULL;
+#else
+                    std::ostream* _stream = (std::ostream*)NULL;
+#endif
+                    bool _coloured = false;
+
+                public:
+                    SerialSinkConfigurations() = default;
+                    SerialSinkConfigurations(const SerialSinkConfigurations& conf) :
+                        _stream { conf._stream }, _coloured { conf._coloured } { }
+
+#ifdef ARDUINO
+                    SerialSinkConfigurations& SetStream(HardwareSerial* stream)
+                    {
+                        this->_stream = stream;
+
+                        return *this;
+                    }
+                    SerialSinkConfigurations& SetStream(SoftwareSerial* stream)
+                    {
+                        this->_stream = stream;
+
+                        return *this;
+                    }
+#else
+                    SerialSinkConfigurations& SetStream(std::ostream* stream)
+                    {
+                        this->_stream = stream;
+
+                        return *this;
+                    }
+#endif
+
+                    SerialSinkConfigurations& SetColoured(bool coloured)
+                    {
+                        this->_coloured = coloured;
+
+                        return *this;
+                    }
+            };
         } // namespace Sinks
         
     } // namespace Log
