@@ -164,6 +164,25 @@ namespace SPIN
 #endif
                     }
             };
+
+            class FileSinkConfigurations
+            {
+                private:
+                    const char* _fileNameFormatter = (char*)NULL;
+
+                public:
+                    FileSinkConfigurations() = default;
+                    FileSinkConfigurations(const FileSinkConfigurations& conf)
+                    {
+                        this->SetFileNameFormatter(conf._fileNameFormatter);
+                    }
+
+                    FileSinkConfigurations& SetFileNameFormatter(const char* fmt)
+                    {
+                        this->_fileNameFormatter = fmt;
+                        return *this;
+                    }
+            };
         } // namespace Sinks
         
     } // namespace Log
