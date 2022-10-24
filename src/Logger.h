@@ -136,9 +136,11 @@ namespace SPIN
                     };
 
                     SerialSink() = delete;
-                    SerialSink(const SerialSink&) = delete;
+                    SerialSink() = delete;
 
                 public:
+                    SerialSink(const SerialSink& sink) :
+                        _stream { sink._stream }, _coloured { sink._coloured } { }
                     SerialSink(SerialSinkConfigurations& conf) :
                         _stream { conf._stream }, _coloured { conf._coloured } { }
 
