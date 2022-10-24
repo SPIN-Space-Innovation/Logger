@@ -137,7 +137,6 @@ namespace SPIN
                     };
 
                     SerialSink() = delete;
-                    SerialSink() = delete;
 
                 public:
                     SerialSink(const SerialSink& sink) :
