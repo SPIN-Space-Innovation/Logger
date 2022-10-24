@@ -51,6 +51,17 @@ namespace SPIN
             Error = 4,
             Fatal = 5
         };
+
+        namespace Sinks
+        {
+            class ISink
+            {
+                public:
+                    virtual void Handle(SPIN::Log::LogLevel, const char* message) = 0;
+                    virtual void Flush() = 0;
+            };
+        } // namespace Sinks
+        
     } // namespace Log
     
 } // namespace SPIN
