@@ -311,6 +311,20 @@ namespace SPIN
             };
         } // namespace Sinks
         
+        class ILogger
+        {
+            private:
+                virtual void LogEx(SPIN::Log::LogLevel logLevel, const char* message, va_list args) = 0;
+
+            public:
+                virtual void Log(SPIN::Log::LogLevel logLevel, const char* message, ...) = 0;
+                virtual void Verbose(const char* message, ...) = 0;
+                virtual void Debug(const char* message, ...) = 0;
+                virtual void Information(const char* message, ...) = 0;
+                virtual void Warning(const char* message, ...) = 0;
+                virtual void Error(const char* message, ...) = 0;
+                virtual void Fatal(const char* message, ...) = 0;
+        };
     } // namespace Log
     
 } // namespace SPIN
