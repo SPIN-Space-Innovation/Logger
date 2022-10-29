@@ -325,6 +325,104 @@ namespace SPIN
                 virtual void Error(const char* message, ...) = 0;
                 virtual void Fatal(const char* message, ...) = 0;
         };
+
+        class SimpleLogger : public ILogger
+        {
+            private:
+                char* _buffer = (char*)NULL;
+                uint16_t _bufferSize = 0;
+                SPIN::Log::Sinks::ISink** _sinks = (SPIN::Log::Sinks::ISink**)NULL;
+                uint16_t _numberOfSinks = 0;
+
+                void LogEx(SPIN::Log::LogLevel logLevel, const char* message, va_list args)
+                {
+                    vsnprintf(this->_buffer, this->_bufferSize, message, args);
+
+                    for (uint16_t i = 0; i < this->_numberOfSinks; i++)
+                    {
+                        this->_sinks[i]->Handle(logLevel, this->_buffer);
+                    }
+                }
+
+            public:
+                SimpleLogger() = delete;
+                SimpleLogger(uint16_t bufferSize, SPIN::Log::Sinks::ISink** sinks, uint16_t numberOfSinks)
+                {
+                    this->_sinks = sinks;
+                    this->_numberOfSinks = numberOfSinks;
+
+                    this->_buffer = (char*)malloc(bufferSize * sizeof(char));
+                    if (this->_buffer)
+                    {
+                        this->_bufferSize = bufferSize;
+                    }
+                }
+
+                void Log(SPIN::Log::LogLevel logLevel, const char* message, ...) override
+                {
+                    va_list args;
+                    va_start(args, message);
+
+                    this->LogEx(logLevel, message, args);
+
+                    va_end(args);
+                }
+
+                void Verbose(const char* message, ...) override
+                {
+                    va_list args;
+                    va_start(args, message);
+
+                    this->LogEx(SPIN::Log::LogLevel::Verbose, message, args);
+
+                    va_end(args);
+                }
+                void Debug(const char* message, ...) override
+                {
+                    va_list args;
+                    va_start(args, message);
+
+                    this->LogEx(SPIN::Log::LogLevel::Debug, message, args);
+
+                    va_end(args);
+                }
+                void Information(const char* message, ...) override
+                {
+                    va_list args;
+                    va_start(args, message);
+
+                    this->LogEx(SPIN::Log::LogLevel::Information, message, args);
+
+                    va_end(args);
+                }
+                void Warning(const char* message, ...) override
+                {
+                    va_list args;
+                    va_start(args, message);
+
+                    this->LogEx(SPIN::Log::LogLevel::Warning, message, args);
+
+                    va_end(args);
+                }
+                void Error(const char* message, ...) override
+                {
+                    va_list args;
+                    va_start(args, message);
+
+                    this->LogEx(SPIN::Log::LogLevel::Error, message, args);
+
+                    va_end(args);
+                }
+                void Fatal(const char* message, ...) override
+                {
+                    va_list args;
+                    va_start(args, message);
+
+                    this->LogEx(SPIN::Log::LogLevel::Fatal, message, args);
+
+                    va_end(args);
+                }
+        };
     } // namespace Log
     
 } // namespace SPIN
