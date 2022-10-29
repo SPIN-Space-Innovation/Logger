@@ -228,6 +228,7 @@ namespace SPIN
 
                         bool fileFound;
 
+#ifdef ARDUINO
                         do
                         {
                             snprintf(this->_fileNameBuffer,
@@ -238,12 +239,24 @@ namespace SPIN
                                 this->_counter,
                                 this->_counter);
                             this->_counter++;
-#ifdef ARDUINO
+
                             fileFound = SD.exists(this->_fileNameBuffer);
                         } while (fileFound);
 
                         this->_fptr = SD.open(this->_fileNameBuffer, FILE_WRITE);
 #else
+                        do
+                        {
+                            snprintf(this->_fileNameBuffer,
+                                this->_fileNameBufferSize,
+                                this->_fileNameFormatter,
+                                this->_counter,
+                                this->_counter,
+                                this->_counter,
+                                this->_counter);
+
+                            this->_counter++;
+
                             FILE* fptr;
                             fileFound = (fptr = fopen(this->_fileNameBuffer, "r")) != NULL;
 
