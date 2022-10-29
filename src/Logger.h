@@ -326,6 +326,7 @@ namespace SPIN
                 virtual void Fatal(const char* message, ...) = 0;
         };
 
+        class SimpleLoggerFactory;
         class SimpleLogger : public ILogger
         {
             private:
@@ -333,6 +334,27 @@ namespace SPIN
                 uint16_t _bufferSize = 0;
                 SPIN::Log::Sinks::ISink** _sinks = (SPIN::Log::Sinks::ISink**)NULL;
                 uint16_t _numberOfSinks = 0;
+
+                SimpleLogger() = delete;
+                SimpleLogger(uint16_t bufferSize, SPIN::Log::Sinks::ISink** sinks, uint16_t numberOfSinks)
+                {
+                    this->_buffer = (char*)malloc(bufferSize * sizeof(char));
+                    if (!this->_buffer)
+                    {
+                        return;
+                    }
+                    this->_bufferSize = bufferSize;
+
+                    this->_sinks = (SPIN::Log::Sinks::ISink**)malloc(numberOfSinks * sizeof(SPIN::Log::Sinks::ISink*));
+                    if (!this->_sinks)
+                    {
+                        free((void*)(this->_buffer));
+                        this->_buffer = (char*)NULL;
+                        this->_bufferSize;
+                    }
+                    memcpy((void*)(this->_sinks), (const void*)sinks, numberOfSinks * sizeof(SPIN::Log::Sinks::ISink*));
+                    this->_numberOfSinks = numberOfSinks;
+                }
 
                 void LogEx(SPIN::Log::LogLevel logLevel, const char* message, va_list args)
                 {
@@ -344,20 +366,9 @@ namespace SPIN
                     }
                 }
 
+                friend class SPIN::Log::SimpleLoggerFactory;
+
             public:
-                SimpleLogger() = delete;
-                SimpleLogger(uint16_t bufferSize, SPIN::Log::Sinks::ISink** sinks, uint16_t numberOfSinks)
-                {
-                    this->_sinks = sinks;
-                    this->_numberOfSinks = numberOfSinks;
-
-                    this->_buffer = (char*)malloc(bufferSize * sizeof(char));
-                    if (this->_buffer)
-                    {
-                        this->_bufferSize = bufferSize;
-                    }
-                }
-
                 void Log(SPIN::Log::LogLevel logLevel, const char* message, ...) override
                 {
                     va_list args;
@@ -422,6 +433,95 @@ namespace SPIN
 
                     va_end(args);
                 }
+        };
+
+        class SimpleLoggerFactory
+        {
+            SPIN::Log::Sinks::ISink** _sinks = (SPIN::Log::Sinks::ISink**)NULL;
+            uint16_t _numberOfSinks = 0;
+            uint16_t _sizeOfSinks = 0;
+
+            bool DoubleSinksArray(uint16_t minimumNumberOfSinks = 1)
+            {
+                if (!minimumNumberOfSinks)
+                {
+                    minimumNumberOfSinks = 1;
+                }
+
+                if (!this->_sinks)
+                {
+                    this->_sinks = (SPIN::Log::Sinks::ISink**)malloc(minimumNumberOfSinks * sizeof(SPIN::Log::Sinks::ISink*));
+
+                    if (!this->_sinks)
+                    {
+                        return false;
+                    }
+
+                    this->_sizeOfSinks = 1;
+
+                    return true;
+                }
+
+                uint16_t newSize = (2 * this->_sizeOfSinks < minimumNumberOfSinks) ? minimumNumberOfSinks : 2 * this->_sizeOfSinks;
+                SPIN::Log::Sinks::ISink** newPtr = (SPIN::Log::Sinks::ISink**)realloc(this->_sinks, newSize * sizeof(SPIN::Log::Sinks::ISink*));
+                if (!newPtr)
+                {
+                    return false;
+                }
+
+                uint16_t uninitializedSinks = newSize - this->_sizeOfSinks;
+
+                memset((void*)(&(newPtr[this->_numberOfSinks + 1])), 0, uninitializedSinks * sizeof(SPIN::Log::Sinks::ISink*));
+
+                this->_sinks = newPtr;
+                this->_sizeOfSinks = newSize;
+
+                return true;
+            }
+
+        public:
+            SimpleLoggerFactory()
+            {
+                this->DoubleSinksArray(1);
+            }
+
+            SimpleLoggerFactory(const SimpleLoggerFactory& factory)
+            {
+                this->DoubleSinksArray(factory._numberOfSinks);
+
+                memcpy((void*)(this->_sinks), (const void*)(factory._sinks), factory._numberOfSinks * sizeof(SPIN::Log::Sinks::ISink*));
+            }
+
+            SimpleLoggerFactory& AddSink(SPIN::Log::Sinks::ISink* sink)
+            {
+                if (this->_numberOfSinks == this->_sizeOfSinks && !DoubleSinksArray())
+                {
+                    return *this;
+                }
+
+                this->_sinks[this->_numberOfSinks++] = sink;
+
+                return *this;
+            }
+
+            SPIN::Log::ILogger* Build()
+            {
+                SPIN::Log::ILogger* logger = new SPIN::Log::SimpleLogger(1024, this->_sinks, this->_numberOfSinks);
+
+                return logger;
+            }
+
+            ~SimpleLoggerFactory()
+            {
+                if (this->_sinks)
+                {
+                    free((void*)(this->_sinks));
+                }
+
+                this->_sinks = (SPIN::Log::Sinks::ISink**)NULL;
+                this->_numberOfSinks = 0;
+                this->_sizeOfSinks = 0;
+            }
         };
     } // namespace Log
     
