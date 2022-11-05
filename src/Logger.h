@@ -39,20 +39,12 @@
     #include <iostream>
 #endif
 
+#include <SPIN/Log/LogLevel.hpp>
+
 namespace SPIN
 {
     namespace Log
     {
-        enum class LogLevel : uint8_t
-        {
-            Verbose = 0,
-            Debug = 1,
-            Information = 2,
-            Warning = 3,
-            Error = 4,
-            Fatal = 5
-        };
-
         namespace Sinks
         {
             class ISink
