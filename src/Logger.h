@@ -41,19 +41,14 @@
 
 #include <SPIN/Log/LogLevel.hpp>
 
+#include <SPIN/Log/Sinks/ISink.hpp>
+
 namespace SPIN
 {
     namespace Log
     {
         namespace Sinks
         {
-            class ISink
-            {
-                public:
-                    virtual void Handle(SPIN::Log::LogLevel, const char* message) = 0;
-                    virtual void Flush() = 0;
-            };
-
             class SerialSink;
             class SerialSinkConfigurations
             {
