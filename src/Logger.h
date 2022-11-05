@@ -42,6 +42,7 @@
 #include <SPIN/Log/LogLevel.hpp>
 
 #include <SPIN/Log/Sinks/ISink.hpp>
+#include <SPIN/Log/Sinks/SerialSink.hpp>
 
 namespace SPIN
 {
@@ -49,109 +50,6 @@ namespace SPIN
     {
         namespace Sinks
         {
-            class SerialSink;
-            class SerialSinkConfigurations
-            {
-                private:
-#ifdef ARDUINO
-                    Stream* _stream = (Stream*)NULL;
-#else
-                    std::ostream* _stream = (std::ostream*)NULL;
-#endif
-                    bool _coloured = false;
-
-                    friend class SPIN::Log::Sinks::SerialSink;
-                public:
-                    SerialSinkConfigurations() = default;
-                    SerialSinkConfigurations(const SerialSinkConfigurations& conf) :
-                        _stream { conf._stream }, _coloured { conf._coloured } { }
-
-#ifdef ARDUINO
-                    SerialSinkConfigurations& SetStream(HardwareSerial* stream)
-                    {
-                        this->_stream = stream;
-
-                        return *this;
-                    }
-                    SerialSinkConfigurations& SetStream(SoftwareSerial* stream)
-                    {
-                        this->_stream = stream;
-
-                        return *this;
-                    }
-#else
-                    SerialSinkConfigurations& SetStream(std::ostream* stream)
-                    {
-                        this->_stream = stream;
-
-                        return *this;
-                    }
-#endif
-
-                    SerialSinkConfigurations& SetColoured(bool coloured)
-                    {
-                        this->_coloured = coloured;
-
-                        return *this;
-                    }
-            };
-
-            class SerialSink : public SPIN::Log::Sinks::ISink
-            {
-                private:
-#ifdef ARDUINO
-                    Stream* _stream = (Stream*)NULL;
-#else
-                    std::ostream* _stream = (std::ostream*)NULL;
-#endif
-                    bool _coloured = false;
-
-                    const char _uncolouredTag[6][8] = {
-                        "[VER]: ",
-                        "[DEB]: ",
-                        "[INF]: ",
-                        "[WAR]: ",
-                        "[ERR]: ",
-                        "[FAT]: "
-                    };
-                    const char _colouredTag[6][17] = {
-                        "[\e[37mVER\e[0m]: ",
-                        "[\e[36mDEB\e[0m]: ",
-                        "[\e[93mINF\e[0m]: ",
-                        "[\e[34mWAR\e[0m]: ",
-                        "[\e[31mERR\e[0m]: ",
-                        "[\e[91mFAT\e[0m]: "
-                    };
-
-                    SerialSink() = delete;
-
-                public:
-                    SerialSink(const SerialSink& sink) :
-                        _stream { sink._stream }, _coloured { sink._coloured } { }
-                    SerialSink(SerialSinkConfigurations& conf) :
-                        _stream { conf._stream }, _coloured { conf._coloured } { }
-
-                    void Handle(SPIN::Log::LogLevel logLevel, const char* message) override
-                    {
-                        const char* tag = (this->_coloured) ? _colouredTag[(uint8_t)logLevel] : _uncolouredTag[(uint8_t)logLevel];
-#ifdef ARDUINO
-                        this->_stream->print(tag);
-                        this->_stream->println(message);
-#else
-                        *(this->_stream) << tag << message << '\n';
-#endif
-                    }
-
-                    void Flush() override
-                    {
-#ifdef ARDUINO
-                        this->_stream->flush();
-#else
-                        *(this->_stream) << std::flush;
-#endif
-                    }
-            };
-
             class FileSink;
             class FileSinkConfigurations
             {
