@@ -31,7 +31,6 @@
 #ifdef ARDUINO
     #include <Arduino.h>
     #include <SD.h>
-    #include <SoftwareSerial.h>
 #else
     #include <cstdio>
     #include <cstdlib>
@@ -42,160 +41,13 @@
 #include <SPIN/Log/LogLevel.hpp>
 
 #include <SPIN/Log/Sinks/ISink.hpp>
+#include <SPIN/Log/Sinks/FileSink.hpp>
 #include <SPIN/Log/Sinks/SerialSink.hpp>
 
 namespace SPIN
 {
     namespace Log
     {
-        namespace Sinks
-        {
-            class FileSink;
-            class FileSinkConfigurations
-            {
-                private:
-                    const char* _fileNameFormatter = (char*)NULL;
-
-                    friend class SPIN::Log::Sinks::FileSink;
-                public:
-                    FileSinkConfigurations() = default;
-                    FileSinkConfigurations(const FileSinkConfigurations& conf)
-                    {
-                        this->SetFileNameFormatter(conf._fileNameFormatter);
-                    }
-
-                    FileSinkConfigurations& SetFileNameFormatter(const char* fmt)
-                    {
-                        this->_fileNameFormatter = fmt;
-                        return *this;
-                    }
-            };
-
-            class FileSink : public SPIN::Log::Sinks::ISink
-            {
-                private:
-                    const char* _fileNameFormatter = (const char*)NULL;
-                    char* _fileNameBuffer = (char*)NULL;
-                    size_t _fileNameBufferSize = 0;
-                    uint16_t _counter = 0;
-                    bool _fileOpen = false;
-
-#ifdef ARDUINO
-                    File _fptr;
-#else
-                    FILE* _fptr = (FILE*)NULL;
-#endif
-                    const char _tag[6][8] = {
-                        "[VER]: ",
-                        "[DEB]: ",
-                        "[INF]: ",
-                        "[WAR]: ",
-                        "[ERR]: ",
-                        "[FAT]: "
-                    };
-
-                    FileSink() = delete;
-
-                    void OpenFile()
-                    {
-                        if (!this->_fileNameBuffer)
-                        {
-                            size_t fileNameFormatterSize = strlen(this->_fileNameFormatter);
-                            size_t fileNameBufferSize = fileNameFormatterSize + 4 * 5 + 1;
-
-                            this->_fileNameBuffer = (char*)malloc(fileNameFormatterSize * sizeof(char));
-
-                            if (!this->_fileNameBuffer)
-                                return;
-
-                            this->_fileNameBufferSize = fileNameBufferSize;
-                        }
-
-                        bool fileFound;
-
-#ifdef ARDUINO
-                        do
-                        {
-                            snprintf(this->_fileNameBuffer,
-                                this->_fileNameBufferSize,
-                                this->_fileNameFormatter,
-                                this->_counter,
-                                this->_counter,
-                                this->_counter,
-                                this->_counter);
-                            this->_counter++;
-
-                            fileFound = SD.exists(this->_fileNameBuffer);
-                        } while (fileFound);
-
-                        this->_fptr = SD.open(this->_fileNameBuffer, FILE_WRITE);
-#else
-                        do
-                        {
-                            snprintf(this->_fileNameBuffer,
-                                this->_fileNameBufferSize,
-                                this->_fileNameFormatter,
-                                this->_counter,
-                                this->_counter,
-                                this->_counter,
-                                this->_counter);
-
-                            this->_counter++;
-
-                            FILE* fptr;
-                            fileFound = (fptr = fopen(this->_fileNameBuffer, "r")) != NULL;
-
-                            if (fileFound)
-                            {
-                                fclose(fptr);
-                            }
-                        } while (fileFound);
-
-                        this->_fptr = fopen(this->_fileNameBuffer, "w");
-#endif
-
-                        this->_fileOpen = true;
-                    }
-
-                public:
-                    FileSink(FileSinkConfigurations& conf) :
-                        _fileNameFormatter{ conf._fileNameFormatter }
-                    {
-                        this->OpenFile();
-                    }
-
-                    FileSink(const FileSink& sink) : _fileNameFormatter{ sink._fileNameFormatter }
-                    {
-                        this->OpenFile();
-                    }
-
-                    void Handle(SPIN::Log::LogLevel logLevel, const char* message) override
-                    {
-                        if (!this->_fileOpen)
-                        {
-                            this->OpenFile();
-                        }
-
-                        const char* tag = _tag[(uint8_t)logLevel];
-#ifdef ARDUINO
-                        this->_fptr.print(tag);
-                        this->_fptr.println(message);
-#else
-                        fprintf(this->_fptr, "%s%s\n", tag, message);
-#endif
-                    }
-
-                    void Flush() override
-                    {
-#ifdef ARDUINO
-                        this->_fptr.flush();
-#else
-                        fflush(this->_fptr);
-#endif
-                    }
-            };
-        } // namespace Sinks
-        
         class ILogger
         {
             private:
