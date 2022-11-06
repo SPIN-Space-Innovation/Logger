@@ -48,21 +48,15 @@ namespace SPIN
 {
     namespace Log
     {
+        namespace Factory
+        {
+            class CFormattedLoggerFactory;
+        }
+
         template<std::size_t bufferSize>
         class CFormattedLogger : public SPIN::Log::ILogger<bufferSize>
         {
-            protected:
-                void LogExpansion(SPIN::Log::LogLevel logLevel, const char* fmt, va_list args)
-                {
-                    vsnprintf(this->_buffer, bufferSize, fmt, args);
-
-                    for (std::size_t i = 0; i < this->_numberOfSinks; i++)
-                    {
-                        this->_sinks[i]->Handle(logLevel, this->_buffer);
-                    }
-                }
-
-            public:
+            private:
                 CFormattedLogger(SPIN::Log::Sinks::ISink** sinks, std::size_t numberOfSinks)
                 {
                     this->_sinks = (SPIN::Log::Sinks::ISink**)malloc(numberOfSinks * sizeof(SPIN::Log::Sinks::ISink*));
@@ -76,7 +70,50 @@ namespace SPIN
                     memcpy((void*)(this->_sinks), (const void*)sinks, numberOfSinks * sizeof(SPIN::Log::Sinks::ISink*));
                     this->_numberOfSinks = numberOfSinks;
                 }
+
+                friend class SPIN::Log::Factory::CFormattedLoggerFactory;
+
+            protected:
+                void LogExpansion(SPIN::Log::LogLevel logLevel, const char* fmt, va_list args)
+                {
+                    vsnprintf(this->_buffer, bufferSize, fmt, args);
+
+                    for (std::size_t i = 0; i < this->_numberOfSinks; i++)
+                    {
+                        this->_sinks[i]->Handle(logLevel, this->_buffer);
+                    }
+                }
         };
+
+        namespace Factory
+        {
+            class CFormattedLoggerFactory
+            {
+                private:
+                    SPIN::Log::Sinks::ISink** _sinks = nullptr;
+                    std::size_t _numberOfSinks = 0;
+                    std::size_t _sizeOfSinks = 0;
+
+                    bool DoubleCapacityIfNeeded();
+                public:
+                    CFormattedLoggerFactory() = default;
+                    CFormattedLoggerFactory(const CFormattedLoggerFactory&);
+                    CFormattedLoggerFactory(CFormattedLoggerFactory&&) noexcept;
+
+                    CFormattedLoggerFactory& AddSink(SPIN::Log::Sinks::ISink*);
+
+                    template<std::size_t bufferSize>
+                    SPIN::Log::CFormattedLogger<bufferSize> Build()
+                    {
+                        return SPIN::Log::CFormattedLogger<bufferSize>(_sinks, _numberOfSinks);
+                    }
+
+                    CFormattedLoggerFactory& operator=(const CFormattedLoggerFactory&);
+                    CFormattedLoggerFactory& operator=(CFormattedLoggerFactory&&) noexcept;
+
+                    ~CFormattedLoggerFactory();
+            };
+        }
     }
 }
 
