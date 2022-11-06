@@ -23,7 +23,7 @@
  **/
 
 #ifndef __LOGGER__LOGGER__H__
-#define __LOGGER__LOGGER__H__ (0 * 10000 + 1 * 100 + 0)
+#define __LOGGER__LOGGER__H__ (0 * 10000 + 2 * 100 + 0)
 
 #include <stdarg.h>
 #include <stdint.h>
