@@ -78,7 +78,7 @@ namespace SPIN
                     void Flush() override;
 
                     FileSink& operator=(const FileSink&);
-                    FileSink& operator=(FileSink&&);
+                    FileSink& operator=(FileSink&&) noexcept;
 
                     ~FileSink();
             };
@@ -101,7 +101,7 @@ namespace SPIN
                         SPIN::Log::Sinks::FileSink Build();
 
                         FileSinkFactory& operator=(const FileSinkFactory&);
-                        FileSinkFactory& operator=(FileSinkFactory&&) noexcept ;
+                        FileSinkFactory& operator=(FileSinkFactory&&) noexcept;
 
                         ~FileSinkFactory();
                 };

@@ -217,7 +217,7 @@ SPIN::Log::Sinks::FileSink& SPIN::Log::Sinks::FileSink::operator=(const SPIN::Lo
 
     return *this;
 }
-SPIN::Log::Sinks::FileSink& SPIN::Log::Sinks::FileSink::operator=(SPIN::Log::Sinks::FileSink&& deadObj)
+SPIN::Log::Sinks::FileSink& SPIN::Log::Sinks::FileSink::operator=(SPIN::Log::Sinks::FileSink&& deadObj) noexcept
 {
     this->_fileNameFmt = deadObj._fileNameFmt;
     this->_fileNameFmtSize = deadObj._fileNameFmtSize;
